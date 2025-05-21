@@ -22,18 +22,20 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const { title, content, userId } = req.body;
-    const [updated] = await Post.update(
-      { title, content, userId },
-      { where: { id: req.params.id } }
-    );
-    if (updated) {
-      const updatedPost = await Post.findByPk(req.params.id);
-      return res.json(updatedPost);
-    }
-    res.status(404).json({ error: 'Post não encontrado' });
+    const { name, email, password } = req.body;
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+    user.name = name;
+    user.email = email;
+    if (password) user.password = password;
+
+    await user.save(); // Aqui os hooks do Sequelize funcionam corretamente
+
+    const { password: _, ...userData } = user.toJSON();
+    res.json(userData);
   } catch (error) {
-    res.status(400).json({ error: 'Erro ao atualizar post', details: error.message });
+    res.status(400).json({ error: 'Erro ao atualizar usuário', details: error.message });
   }
 });
 
